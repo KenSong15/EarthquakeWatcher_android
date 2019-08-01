@@ -1,4 +1,4 @@
-package com.kens.earthquakewatcher;
+package com.kens.earthquakewatcher.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +23,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.kens.earthquakewatcher.R;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,6 +35,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private LocationManager locationManager;
     private LocationListener locationListener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
