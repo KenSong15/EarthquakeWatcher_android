@@ -45,7 +45,6 @@
                 android:text="More Info"
                 android:background="@android:color/transparent"
                 android:textColor="@color/colorAccent"
-
                 />
         </RelativeLayout>
 

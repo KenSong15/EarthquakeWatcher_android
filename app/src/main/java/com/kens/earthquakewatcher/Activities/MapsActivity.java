@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -16,6 +17,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -55,6 +60,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener;
 
     private RequestQueue queue;
+
+    private AlertDialog.Builder dialogBuilder;
+    private AlertDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,6 +223,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
 
                     Log.d("URL: ", detailsUrl);
+                    getMoreDetails(detailsUrl);
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -226,6 +235,80 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
+        queue.add(jsonObjectRequest);
+    }
+
+    public void getMoreDetails(String url){
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                dialogBuilder = new AlertDialog.Builder(MapsActivity.this);
+                View view = getLayoutInflater().inflate(R.layout.popup, null);
+
+                Button dismissButton = (Button) view.findViewById(R.id.dismissPop);
+                Button dismissTopButton = (Button) view.findViewById(R.id.dismissPoptop);
+                TextView popList = (TextView) view.findViewById(R.id.popList);
+                WebView htmlPop = (WebView) view.findViewById(R.id.htmlWebview);
+
+                StringBuilder stringBuilder = new StringBuilder();
+
+                try {
+                    //for cities list here
+                    JSONArray cities = response.getJSONArray("cities");
+
+                    //extract information from array
+                    for (int i = 0; i < cities.length(); i++){
+                        JSONObject citiesObj = cities.getJSONObject(i);
+
+                        stringBuilder.append("City: "+ citiesObj.getString("name") + "\n" +
+                                                "Distance: "+citiesObj.getString("distance")+ "\n" +
+                                                "Population: "+citiesObj.getString("population"));
+                        stringBuilder.append("\n\n");
+                    }
+                    popList.setText(stringBuilder.toString());
+
+                    //for html report
+                    if(response.has("tectonicSummary") && response.getString("tectonicSummary")!= null){
+                        JSONObject tectonic = response.getJSONObject("tectonicSummary");
+                        if(tectonic.has("text") && tectonic.getString("text")!=null){
+                            String text = tectonic.getString("text");
+                            htmlPop.loadDataWithBaseURL(null,text,"text/html", "UTF-8", null);
+                        }
+                    }
+
+
+                    //setup dismiss button
+                    dismissButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            dialog.dismiss();
+                        }
+                    });
+                    dismissTopButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            dialog.dismiss();
+                        }
+                    });
+
+                    //show the dialog
+                    dialogBuilder.setView(view);
+                    dialog = dialogBuilder.create();
+                    dialog.show();
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        });
+
         queue.add(jsonObjectRequest);
     }
 
