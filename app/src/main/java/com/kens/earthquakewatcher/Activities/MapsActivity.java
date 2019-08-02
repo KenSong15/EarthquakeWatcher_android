@@ -33,6 +33,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.kens.earthquakewatcher.Model.Earthquake;
 import com.kens.earthquakewatcher.R;
+import com.kens.earthquakewatcher.UI.CustomInfoWindow;
 import com.kens.earthquakewatcher.Util.Constants;
 
 import org.json.JSONArray;
@@ -45,7 +46,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
 
@@ -84,6 +85,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {   //will be call when the map ready to use
         mMap = googleMap;
+
+        mMap.setInfoWindowAdapter(new CustomInfoWindow(getApplicationContext()));
+        mMap.setOnInfoWindowClickListener(this);
+        mMap.setOnMarkerClickListener(this);
 
         locationManager = (LocationManager) this.getSystemService(LOCATION_SERVICE);
         locationListener = new LocationListener() {
@@ -179,5 +184,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
         queue.add(jsonObjectRequest);
+    }
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        Toast.makeText(getApplicationContext(),marker.getTitle().toString(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
     }
 }
