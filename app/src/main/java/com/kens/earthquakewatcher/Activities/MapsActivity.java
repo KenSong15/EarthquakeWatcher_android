@@ -27,8 +27,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.kens.earthquakewatcher.Model.Earthquake;
 import com.kens.earthquakewatcher.R;
 import com.kens.earthquakewatcher.Util.Constants;
 
@@ -37,6 +40,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,7 +53,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener;
 
     private RequestQueue queue;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,16 +120,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         }
 
-        //have it for fun
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        getEarthquakes();   //get all earthquake and have marker ready
 
-        getEarthquakes();   //get all earthquake
     }
 
 //    get all earthquake object
     public void getEarthquakes(){
+
+        final Earthquake earthquake = new Earthquake();
+
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, Constants.week_10_URL, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -143,9 +146,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         double lon = coordinates.getDouble(0);
                         double lat = coordinates.getDouble(1);
 
-                        Log.d("kenplace: ", lon + " "+ lat);
+                        earthquake.setPlace(properties.getString("place"));
+                        earthquake.setType(properties.getString("type"));
+                        earthquake.setTime(properties.getLong("time"));
+                        earthquake.setMagnitude(properties.getDouble("mag"));
+                        earthquake.setDetailLink(properties.getString("detail"));
 
-                        //Log.d("kenprop: ", properties.getString("place"));
+                        java.text.DateFormat dataFormat = java.text.DateFormat.getDateInstance();
+                        String formattedDate = dataFormat.format(new Date(Long.valueOf(properties.getLong("time"))).getTime());
+
+                        MarkerOptions markerOptions = new MarkerOptions();
+                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+                        markerOptions.title(earthquake.getPlace());
+                        markerOptions.position(new LatLng( lat, lon));
+                        markerOptions.snippet("Magnitude: " + earthquake.getMagnitude() + "\n" +
+                                                "Date: " + formattedDate);
+
+                        Marker marker = mMap.addMarker(markerOptions);  //make each could be specific
+                        marker.setTag(earthquake.getDetailLink());
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 1));
                     }
 
                 } catch (JSONException e) {
