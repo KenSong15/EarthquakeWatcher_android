@@ -10,6 +10,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -33,7 +34,9 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -51,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener {
 
@@ -64,6 +68,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private AlertDialog.Builder dialogBuilder;
     private AlertDialog dialog;
 
+    private BitmapDescriptor[] iconColors;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +79,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        iconColors = new BitmapDescriptor[] {
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW),
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+
+        };
+
         queue = Volley.newRequestQueue(this);
+        getEarthquakes();   //get all earthquake and have marker ready
     }
 
 
@@ -134,8 +148,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         }
 
-        getEarthquakes();   //get all earthquake and have marker ready
-
     }
 
 //    get all earthquake object
@@ -161,6 +173,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         double lat = coordinates.getDouble(1);
 
                         earthquake.setPlace(properties.getString("place"));
+                        earthquake.setLat(lat);
+                        earthquake.setLon(lon);
                         earthquake.setType(properties.getString("type"));
                         earthquake.setTime(properties.getLong("time"));
                         earthquake.setMagnitude(properties.getDouble("mag"));
@@ -170,7 +184,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         String formattedDate = dataFormat.format(new Date(Long.valueOf(properties.getLong("time"))).getTime());
 
                         MarkerOptions markerOptions = new MarkerOptions();
-                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+
+                        //make the icon here
+                        //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+                        if(earthquake.getMagnitude() >= 2.0){
+                            markerOptions.icon(iconColors[2]);
+
+                            //make the circle mark
+                            CircleOptions circleOptions = new CircleOptions();
+                            circleOptions.center(new LatLng(earthquake.getLat(), earthquake.getLon()));
+                            circleOptions.radius(30000);
+                            circleOptions.strokeWidth(3.6f);
+                            circleOptions.fillColor(Color.RED);
+                            mMap.addCircle(circleOptions);
+                        }else if (earthquake.getMagnitude() >= 1.5){
+                            markerOptions.icon(iconColors[1]);
+                        }else{
+                            markerOptions.icon(iconColors[0]);
+                        }
+
                         markerOptions.title(earthquake.getPlace());
                         markerOptions.position(new LatLng( lat, lon));
                         markerOptions.snippet("Magnitude: " + earthquake.getMagnitude() + "\n" +
@@ -316,4 +348,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public boolean onMarkerClick(Marker marker) {
         return false;
     }
+
 }
