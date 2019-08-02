@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.app.DownloadManager;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -188,7 +189,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onInfoWindowClick(Marker marker) {
-        Toast.makeText(getApplicationContext(),marker.getTitle().toString(), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(),marker.getTitle().toString(), Toast.LENGTH_SHORT).show();
+        getQuakeDetails(marker.getTag().toString());
+    }
+
+    private void getQuakeDetails(String url) {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+
+                String detailsUrl = "";
+
+                try {
+                    JSONObject properties = response.getJSONObject("properties");
+                    JSONObject products = properties.getJSONObject("products");
+                    JSONArray geoserve = products.getJSONArray("geoserve");
+
+                    for(int i = 0; i < geoserve.length(); i++){
+                        JSONObject geoserveObj = geoserve.getJSONObject(i);
+                        JSONObject contentObj = geoserveObj.getJSONObject("contents");
+                        JSONObject geoJsonObj = contentObj.getJSONObject("geoserve.json");
+
+                        detailsUrl = geoJsonObj.getString("url");
+
+                    }
+
+                    Log.d("URL: ", detailsUrl);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        });
+        queue.add(jsonObjectRequest);
     }
 
     @Override
